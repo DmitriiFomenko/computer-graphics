@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
 
 void main() {
   runApp(const MyApp());
 }
 
-double size = 3;
+double size = 1;
 
 double height = 600.0;
 double width = 600.0;
 
 int coordX = 0;
+int coordY = 0;
 
-int countPoints = 600;
-int fromPoints = -300;
-Function function = (i) => i;
+int countPoints = 2000;
+int fromPoints = -1000;
+Function function = (i) => i * i;
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
@@ -57,6 +57,23 @@ class _MyHomePageState extends State<MyHomePage> {
             rowPoint(setState),
             rowGraph(setState),
             rowMove(setState),
+            TextButton(
+              onPressed: () {
+                height = 600.0;
+                width = 600.0;
+                coordX = 0;
+                coordY = 0;
+                countPoints = 2000;
+                fromPoints = -1000;
+                setState(() {});
+              },
+              child: const Text(
+                'RESET',
+                style: TextStyle(
+                  fontSize: 20,
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -80,14 +97,21 @@ List listPoint(Function function) {
   final result =
       List.generate(countPoints, (index) => fromPoints + index).map((e) {
     // print((((function(e) - min) * (height - 0)) / (max - min)) + 0);
-    print(
-        '$e: ${height - (((function(e) - min) * (height - 0)) / (max - min)) + 0}');
+    // print(
+    //     '$e: ${height - (((function(e) - min) * (height - 0)) / (max - min)) + 0}');
     return Positioned(
-      left: coordX + width / 2 + e,
-      top: height - (((function(e) - min) * (height - 0)) / (max - min)) + 0,
+      left: coordX +
+          width / 2 +
+          (((e - fromPoints) * (height - 0)) /
+              (countPoints - fromPoints - fromPoints)) +
+          0,
+      top: coordY +
+          height -
+          (((function(e) - min) * (height - 0)) / (max - min)) +
+          0,
       child: Container(
-        height: size,
-        width: size,
+        height: countPoints < 200 ? size * 3 : size,
+        width: countPoints < 200 ? size * 3 : size,
         color: Colors.red,
       ),
     );
@@ -121,6 +145,36 @@ Widget rowMove(Function setState) {
           },
           child: const Text(
             'Right 100',
+            style: TextStyle(
+              fontSize: 20,
+            ),
+          ),
+        ),
+        Text(
+          'X: $coordX; Y: $coordY',
+          style: const TextStyle(
+            fontSize: 20,
+          ),
+        ),
+        TextButton(
+          onPressed: () {
+            coordY -= 100;
+            setState(() {});
+          },
+          child: const Text(
+            'Up 100',
+            style: TextStyle(
+              fontSize: 20,
+            ),
+          ),
+        ),
+        TextButton(
+          onPressed: () {
+            coordY += 100;
+            setState(() {});
+          },
+          child: const Text(
+            'Down 100',
             style: TextStyle(
               fontSize: 20,
             ),
@@ -252,6 +306,18 @@ Widget rowPoint(Function setState) {
       children: [
         TextButton(
           onPressed: () {
+            fromPoints -= 1000;
+            setState(() {});
+          },
+          child: const Text(
+            '-1000',
+            style: TextStyle(
+              fontSize: 20,
+            ),
+          ),
+        ),
+        TextButton(
+          onPressed: () {
             fromPoints -= 100;
             setState(() {});
           },
@@ -304,6 +370,18 @@ Widget rowPoint(Function setState) {
             ),
           ),
         ),
+        TextButton(
+          onPressed: () {
+            fromPoints += 1000;
+            setState(() {});
+          },
+          child: const Text(
+            '+1000',
+            style: TextStyle(
+              fontSize: 20,
+            ),
+          ),
+        ),
       ],
     ),
   );
@@ -315,6 +393,19 @@ Widget rowCount(Function setState) {
     child: Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
+        TextButton(
+          onPressed: () {
+            countPoints -= 1000;
+            if (countPoints < 2) countPoints = 2;
+            setState(() {});
+          },
+          child: const Text(
+            '-1000',
+            style: TextStyle(
+              fontSize: 20,
+            ),
+          ),
+        ),
         TextButton(
           onPressed: () {
             countPoints -= 100;
@@ -366,6 +457,18 @@ Widget rowCount(Function setState) {
           },
           child: const Text(
             '+100',
+            style: TextStyle(
+              fontSize: 20,
+            ),
+          ),
+        ),
+        TextButton(
+          onPressed: () {
+            countPoints += 1000;
+            setState(() {});
+          },
+          child: const Text(
+            '+1000',
             style: TextStyle(
               fontSize: 20,
             ),

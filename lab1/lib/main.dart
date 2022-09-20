@@ -1,188 +1,131 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 void main() {
   runApp(const MyApp());
 }
 
-double size = 1;
+const double height = 500.0;
+const double width = 500.0;
 
-double height = 600.0;
-double width = 600.0;
+double Function(double) function = (x) => sin(x);
 
-int coordX = 0;
-int coordY = 0;
-
-int countPoints = 2000;
-int fromPoints = -1000;
-Function function = (i) => i * i;
+int from = -10;
+int length = 20;
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: MyHomePage(),
+    return MaterialApp(
+      routes: {
+        '/': (context) => const MainPage(),
+      },
+      initialRoute: '/',
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key}) : super(key: key);
+class MainPage extends StatefulWidget {
+  const MainPage({
+    Key? key,
+  }) : super(key: key);
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<MainPage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MainPage> {
+  @override
+  void initState() {
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.blueGrey,
-      body: Center(
-        child: Column(
-          children: [
-            Container(
-              constraints: BoxConstraints(
-                maxHeight: height,
-              ),
+      body: Column(
+        children: [
+          const SizedBox(
+            height: 50,
+          ),
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(width: 0.2),
               color: Colors.white,
-              child: Stack(
-                children: <Widget>[
-                  ...listPoint(function),
-                ],
-              ),
             ),
-            rowCount(setState),
-            rowPoint(setState),
-            rowGraph(setState),
-            rowMove(setState),
-            TextButton(
-              onPressed: () {
-                height = 600.0;
-                width = 600.0;
-                coordX = 0;
-                coordY = 0;
-                countPoints = 2000;
-                fromPoints = -1000;
-                setState(() {});
-              },
-              child: const Text(
-                'RESET',
-                style: TextStyle(
-                  fontSize: 20,
+            height: height,
+            width: width,
+            child: InteractiveViewer(
+              panEnabled: true,
+              child: CustomPaint(
+                foregroundPainter: SinPainter(
+                  function: function,
+                  range: List.generate(
+                      length.toInt() * 10, (index) => from + index * 0.1),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+          rowGraph(setState),
+          rowPoint(setState),
+          rowCount(setState),
+        ],
       ),
     );
   }
 }
 
-List listPoint(Function function) {
-  final listDigits =
-      List.generate(countPoints, (index) => fromPoints + index + 0.0);
-  double min = function(listDigits[0]) + 0.0;
-  double max = function(listDigits[0]) + 0.0;
+class ChartPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {}
 
-  for (var element in listDigits) {
-    if (function(element) < min) min = function(element);
-    if (function(element) > max) max = function(element);
-  }
-
-  print('$max; $min');
-
-  final result =
-      List.generate(countPoints, (index) => fromPoints + index).map((e) {
-    // print((((function(e) - min) * (height - 0)) / (max - min)) + 0);
-    // print(
-    //     '$e: ${height - (((function(e) - min) * (height - 0)) / (max - min)) + 0}');
-    return Positioned(
-      left: coordX +
-          width / 2 +
-          (((e - fromPoints) * (height - 0)) /
-              (countPoints - fromPoints - fromPoints)) +
-          0,
-      top: coordY +
-          height -
-          (((function(e) - min) * (height - 0)) / (max - min)) +
-          0,
-      child: Container(
-        height: countPoints < 200 ? size * 3 : size,
-        width: countPoints < 200 ? size * 3 : size,
-        color: Colors.red,
-      ),
-    );
-  }).toList();
-
-  return result;
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-Widget rowMove(Function setState) {
-  return Container(
-    color: Colors.yellow,
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        TextButton(
-          onPressed: () {
-            coordX -= 100;
-            setState(() {});
-          },
-          child: const Text(
-            'Left 100',
-            style: TextStyle(
-              fontSize: 20,
-            ),
-          ),
-        ),
-        TextButton(
-          onPressed: () {
-            coordX += 100;
-            setState(() {});
-          },
-          child: const Text(
-            'Right 100',
-            style: TextStyle(
-              fontSize: 20,
-            ),
-          ),
-        ),
-        Text(
-          'X: $coordX; Y: $coordY',
-          style: const TextStyle(
-            fontSize: 20,
-          ),
-        ),
-        TextButton(
-          onPressed: () {
-            coordY -= 100;
-            setState(() {});
-          },
-          child: const Text(
-            'Up 100',
-            style: TextStyle(
-              fontSize: 20,
-            ),
-          ),
-        ),
-        TextButton(
-          onPressed: () {
-            coordY += 100;
-            setState(() {});
-          },
-          child: const Text(
-            'Down 100',
-            style: TextStyle(
-              fontSize: 20,
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
+class SinPainter extends CustomPainter {
+  final double Function(double) function;
+  final List<double> range;
+
+  SinPainter({
+    required this.function,
+    required this.range,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final List<double> sums = range.map((e) => function(e)).toList();
+    final List<double> convertedSums = sums
+        .map((e) =>
+            ((e - sums.reduce(min)) * height) /
+            (sums.reduce(max) - sums.reduce(min)))
+        .toList();
+
+    final List<double> convertedRange = range
+        .map((e) =>
+            ((e - range.reduce(min)) * width) /
+            (range.reduce(max) - range.reduce(min)))
+        .toList();
+
+    final paint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = Colors.black;
+    paint.strokeWidth = 2;
+    var pt = Offset(0, height - convertedSums.first);
+
+    for (int i = 0; i < sums.length; i += 1) {
+      final npt = Offset(convertedRange[i], height - convertedSums[i]);
+      canvas.drawLine(pt, npt, paint);
+      pt = npt;
+    }
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => true;
 }
 
 Widget rowGraph(Function setState) {
@@ -191,6 +134,18 @@ Widget rowGraph(Function setState) {
     child: Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
+        TextButton(
+          onPressed: () {
+            function = (x) => x.abs();
+            setState(() {});
+          },
+          child: const Text(
+            '|x|',
+            style: TextStyle(
+              fontSize: 20,
+            ),
+          ),
+        ),
         TextButton(
           onPressed: () {
             function = (x) => x;
@@ -240,7 +195,7 @@ Widget rowGraph(Function setState) {
           ),
         ),
         Text(
-          'Now: 2 to ${function(2)}',
+          'Now Y: ${function(from.toDouble())} to ${function(from + length + 0.0)}; Now X: $from to ${from + length};',
           style: const TextStyle(
             fontSize: 20,
           ),
@@ -293,6 +248,18 @@ Widget rowGraph(Function setState) {
             ),
           ),
         ),
+        TextButton(
+          onPressed: () {
+            function = (x) => sin(x);
+            setState(() {});
+          },
+          child: const Text(
+            'sin(x)',
+            style: TextStyle(
+              fontSize: 20,
+            ),
+          ),
+        ),
       ],
     ),
   );
@@ -306,19 +273,7 @@ Widget rowPoint(Function setState) {
       children: [
         TextButton(
           onPressed: () {
-            fromPoints -= 1000;
-            setState(() {});
-          },
-          child: const Text(
-            '-1000',
-            style: TextStyle(
-              fontSize: 20,
-            ),
-          ),
-        ),
-        TextButton(
-          onPressed: () {
-            fromPoints -= 100;
+            from -= 100;
             setState(() {});
           },
           child: const Text(
@@ -330,7 +285,7 @@ Widget rowPoint(Function setState) {
         ),
         TextButton(
           onPressed: () {
-            fromPoints -= 10;
+            from -= 10;
             setState(() {});
           },
           child: const Text(
@@ -340,15 +295,39 @@ Widget rowPoint(Function setState) {
             ),
           ),
         ),
+        TextButton(
+          onPressed: () {
+            from -= 1;
+            setState(() {});
+          },
+          child: const Text(
+            '-1',
+            style: TextStyle(
+              fontSize: 20,
+            ),
+          ),
+        ),
         Text(
-          'from points: ${fromPoints.toString()}',
+          'from: ${from.toString()}',
           style: const TextStyle(
             fontSize: 20,
           ),
         ),
         TextButton(
           onPressed: () {
-            fromPoints += 10;
+            from += 1;
+            setState(() {});
+          },
+          child: const Text(
+            '+1',
+            style: TextStyle(
+              fontSize: 20,
+            ),
+          ),
+        ),
+        TextButton(
+          onPressed: () {
+            from += 10;
             setState(() {});
           },
           child: const Text(
@@ -360,23 +339,11 @@ Widget rowPoint(Function setState) {
         ),
         TextButton(
           onPressed: () {
-            fromPoints += 100;
+            from += 100;
             setState(() {});
           },
           child: const Text(
             '+100',
-            style: TextStyle(
-              fontSize: 20,
-            ),
-          ),
-        ),
-        TextButton(
-          onPressed: () {
-            fromPoints += 1000;
-            setState(() {});
-          },
-          child: const Text(
-            '+1000',
             style: TextStyle(
               fontSize: 20,
             ),
@@ -395,21 +362,8 @@ Widget rowCount(Function setState) {
       children: [
         TextButton(
           onPressed: () {
-            countPoints -= 1000;
-            if (countPoints < 2) countPoints = 2;
-            setState(() {});
-          },
-          child: const Text(
-            '-1000',
-            style: TextStyle(
-              fontSize: 20,
-            ),
-          ),
-        ),
-        TextButton(
-          onPressed: () {
-            countPoints -= 100;
-            if (countPoints < 2) countPoints = 2;
+            length -= 100;
+            if (length < 2) length = 2;
             setState(() {});
           },
           child: const Text(
@@ -421,8 +375,8 @@ Widget rowCount(Function setState) {
         ),
         TextButton(
           onPressed: () {
-            countPoints -= 10;
-            if (countPoints < 2) countPoints = 2;
+            length -= 10;
+            if (length < 2) length = 2;
             setState(() {});
           },
           child: const Text(
@@ -432,15 +386,40 @@ Widget rowCount(Function setState) {
             ),
           ),
         ),
+        TextButton(
+          onPressed: () {
+            length -= 1;
+            if (length < 2) length = 2;
+            setState(() {});
+          },
+          child: const Text(
+            '-1',
+            style: TextStyle(
+              fontSize: 20,
+            ),
+          ),
+        ),
         Text(
-          'count points: ${countPoints.toString()}',
+          'length: ${length.toString()}',
           style: const TextStyle(
             fontSize: 20,
           ),
         ),
         TextButton(
           onPressed: () {
-            countPoints += 10;
+            length += 1;
+            setState(() {});
+          },
+          child: const Text(
+            '+1',
+            style: TextStyle(
+              fontSize: 20,
+            ),
+          ),
+        ),
+        TextButton(
+          onPressed: () {
+            length += 10;
             setState(() {});
           },
           child: const Text(
@@ -452,23 +431,11 @@ Widget rowCount(Function setState) {
         ),
         TextButton(
           onPressed: () {
-            countPoints += 100;
+            length += 100;
             setState(() {});
           },
           child: const Text(
             '+100',
-            style: TextStyle(
-              fontSize: 20,
-            ),
-          ),
-        ),
-        TextButton(
-          onPressed: () {
-            countPoints += 1000;
-            setState(() {});
-          },
-          child: const Text(
-            '+1000',
             style: TextStyle(
               fontSize: 20,
             ),
